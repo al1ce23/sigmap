@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SIGMAp</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  
+  <!-- MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+  <!-- Lightbox CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
+
+  <style>
+    #map { height: 100vh; }
+    .popup-img { max-width: 150px; max-height: 150px; display: block; margin-bottom: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- jQuery (required for Lightbox) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <!-- Lightbox JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
+
+  <script>
+    // Karte erstellen
+    var map = L.map('map').setView([51.0, 13.7], 12);
+
+    // Basemap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // MarkerClusterGroup
+    var markers = L.markerClusterGroup();
+
+    // GeoJSON laden
+    fetch('photos_with_thumbs_fixed.geojson')
+      .then(response => response.json())
+      .then(data => {
+        data.features.forEach(feature => {
+          var coords = feature.geometry && feature.geometry.coordinates;
+          if(!coords || coords.length !== 2) return; // nur gültige Punkte
+
+          // Marker erstellen
+          var marker = L.marker([coords[1], coords[0]]);
+
+          // Thumbnail-HTML
+          var thumbHtml = "";
+          if(feature.properties.thumb){
+            var fullImagePath = feature.properties.original || feature.properties.thumb;
+            thumbHtml = "<a href='" + fullImagePath + "' data-lightbox='img-" + feature.properties.filename + "'>" +
+                        "<img class='popup-img' src='" + feature.properties.thumb + "'>" +
+                        "</a>";
+          }
+
+          // Popup
+          marker.bindPopup(
+            thumbHtml +
+            "<strong>" + feature.properties.filename + "</strong><br>" +
+            feature.properties.datetime
+          );
+
+          markers.addLayer(marker);
+        });
+
+        // Alle Marker hinzufügen
+        map.addLayer(markers);
+      })
+      .catch(err => console.error("Fehler beim Laden der GeoJSON:", err));
+  </script>
+</body>
+</html>
