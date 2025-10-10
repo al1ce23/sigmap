@@ -181,14 +181,37 @@
       color: #909090;
       white-space: nowrap;
     }
+    /* Larger popup window for 500x500 images */
+    .leaflet-popup-content-wrapper {
+      max-width: 550px !important;
+      width: auto !important;
+    }
+    .leaflet-popup-content {
+      margin: 15px;
+      max-width: 520px;
+      width: auto !important;
+    }
+
     .popup-img {
       max-width: 500px;
       max-height: 500px;
+      width: 100%;
+      height: auto;
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 10px;
       cursor: pointer;
       /* Respect EXIF orientation for proper rotation */
       image-orientation: from-image;
+    }
+
+    .popup-info {
+      font-size: 14px;
+      color: #e0e0e0;
+    }
+    .popup-info strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #f59e0b;
     }
 
     /* Custom cluster styling */
@@ -367,7 +390,18 @@
 
           // Create cluster group for this month if it doesn't exist
           if (!monthLayerGroups[yearMonth]) {
-            monthLayerGroups[yearMonth] = L.markerClusterGroup();
+            monthLayerGroups[yearMonth] = L.markerClusterGroup({
+              // Better clustering for photos at same location
+              maxClusterRadius: 80,        // Larger radius = fewer clusters
+              spiderfyOnMaxZoom: true,     // Spread out markers at same location
+              showCoverageOnHover: false,
+              zoomToBoundsOnClick: true,
+              spiderfyDistanceMultiplier: 2, // More space between spiderfied markers
+              // Performance optimizations
+              removeOutsideVisibleBounds: true,
+              animate: true,
+              animateAddingMarkers: false  // Faster initial load
+            });
           }
 
           // Marker erstellen with custom icon
@@ -379,15 +413,16 @@
             var fullImagePath = feature.properties.original || feature.properties.thumb;
             thumbHtml = "<a href='" + fullImagePath + "' data-lightbox='gallery' data-title='" +
                         feature.properties.filename + " - " + feature.properties.datetime + "'>" +
-                        "<img class='popup-img' src='" + feature.properties.thumb + "'>" +
+                        "<img class='popup-img' src='" + feature.properties.thumb + "' loading='lazy'>" +
                         "</a>";
           }
 
-          // Popup
+          // Popup with better structure
           marker.bindPopup(
             thumbHtml +
-            "<strong>" + feature.properties.filename + "</strong><br>" +
-            feature.properties.datetime
+            "<div class='popup-info'><strong>" + feature.properties.filename + "</strong>" +
+            feature.properties.datetime + "</div>",
+            { maxWidth: 550, minWidth: 300 }
           );
 
           // Add to month-specific cluster group
