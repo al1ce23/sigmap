@@ -16,12 +16,219 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/css/lightbox.min.css" rel="stylesheet">
 
   <style>
-    #map { height: 100vh; }
-    .popup-img { max-width: 150px; max-height: 150px; display: block; margin-bottom: 5px; cursor: pointer; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    #controls {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px 20px;
+      background: rgba(30, 30, 30, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #3a3a3a;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .controls-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .slider-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .slider-container label {
+      min-width: 50px;
+      font-weight: 600;
+      color: #b0b0b0;
+      font-size: 13px;
+    }
+    .slider-track {
+      position: relative;
+      flex: 1;
+    }
+    .slider-container input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #3a3a3a;
+      outline: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .slider-container input[type="range"]:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .slider-container input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #f59e0b;
+      cursor: pointer;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      transition: transform 0.2s;
+    }
+    .slider-container input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      background: #fbbf24;
+    }
+    .slider-container input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #f59e0b;
+      cursor: pointer;
+      border-radius: 50%;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    .slider-value {
+      min-width: 80px;
+      font-weight: 600;
+      color: #f59e0b;
+      text-align: right;
+      font-size: 13px;
+    }
+    .month-markers {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 10px;
+      color: #707070;
+    }
+    .month-marker {
+      cursor: pointer;
+      padding: 3px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      user-select: none;
+      background: #2a2a2a;
+      border: 1px solid transparent;
+    }
+    .month-marker:hover {
+      background: #3a3a3a;
+      color: #f59e0b;
+      border-color: #f59e0b;
+    }
+    .month-marker.active {
+      color: #f59e0b;
+      font-weight: bold;
+      background: #3a2a1a;
+      border-color: #f59e0b;
+    }
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .checkbox-container input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: #f59e0b;
+    }
+    .checkbox-container label {
+      cursor: pointer;
+      color: #b0b0b0;
+      font-size: 13px;
+    }
+    .random-button {
+      padding: 8px 16px;
+      background: #f59e0b;
+      color: #1a1a1a;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .random-button:hover {
+      background: #fbbf24;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    }
+    .random-button:active {
+      transform: translateY(0);
+    }
+    #stats {
+      font-size: 12px;
+      color: #909090;
+      white-space: nowrap;
+    }
+    .popup-img {
+      max-width: 500px;
+      max-height: 500px;
+      display: block;
+      margin-bottom: 5px;
+      cursor: pointer;
+      /* Respect EXIF orientation for proper rotation */
+      image-orientation: from-image;
+    }
+
+    /* Custom cluster styling */
+    .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+      background-color: rgba(245, 158, 11, 0.6) !important;
+    }
+    .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+      background-color: #f59e0b !important;
+      color: #ffffff !important;
+      font-weight: bold;
+    }
+    .custom-marker {
+      background: transparent !important;
+      border: none !important;
+    }
+
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <div id="controls">
+    <div class="controls-inner">
+      <div class="slider-wrapper">
+        <div class="slider-container">
+          <label for="timeSlider">Date:</label>
+          <div class="slider-track">
+            <input type="range" id="timeSlider" min="0" max="100" step="1" value="0">
+          </div>
+          <span class="slider-value" id="timeLabel">All</span>
+        </div>
+        <div class="month-markers" id="monthMarkers"></div>
+      </div>
+      <div class="checkbox-container">
+        <input type="checkbox" id="showAllCheckbox" checked>
+        <label for="showAllCheckbox">Show all</label>
+      </div>
+      <button class="random-button" id="randomButton">Random</button>
+      <div id="stats">Loading...</div>
+    </div>
+  </div>
 
   <!-- jQuery (required for Lightbox) -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -32,8 +239,8 @@
   <!-- Lightbox JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.4/js/lightbox.min.js"></script>
 
+
   <script>
-    // Karte erstellen
     var map = L.map('map').setView([51.0, 13.7], 12);
 
     // Basemap
@@ -41,25 +248,137 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // MarkerClusterGroup
-    var markers = L.markerClusterGroup();
+    // Custom marker icon
+    var customIcon = L.divIcon({
+      className: 'custom-marker',
+      html: '<div style="background: #f59e0b; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+      popupAnchor: [0, -8]
+    });
+
+    // Global variables
+    var allMarkers = [];
+    var timePoints = []; // sorted array of {yearMonth: "YYYY-MM", label: "MMM YYYY"}
+    var monthLayerGroups = {}; // "YYYY-MM" -> cluster group
+
+    // UI Elements
+    var timeSlider = document.getElementById('timeSlider');
+    var timeLabel = document.getElementById('timeLabel');
+    var showAllCheckbox = document.getElementById('showAllCheckbox');
+    var statsDiv = document.getElementById('stats');
+    var monthMarkersDiv = document.getElementById('monthMarkers');
+    var randomButton = document.getElementById('randomButton');
+
+    // Parse year-month from datetime string
+    function getYearMonth(datetime) {
+      if (!datetime) return null;
+      var match = datetime.match(/^(\d{4}):(\d{2})/);
+      return match ? match[1] + '-' + match[2] : null;
+    }
+
+    // Format year-month for display
+    function formatYearMonth(yearMonth) {
+      var parts = yearMonth.split('-');
+      var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return months[parseInt(parts[1]) - 1] + ' ' + parts[0];
+    }
+
+    // Debounce function for performance
+    var updateTimeout;
+    function debounceUpdate() {
+      clearTimeout(updateTimeout);
+      updateTimeout = setTimeout(updateMap, 50);
+    }
+
+    // Update month markers
+    function updateMonthMarkers() {
+      var sliderValue = parseInt(timeSlider.value);
+      var markers = monthMarkersDiv.querySelectorAll('.month-marker');
+      markers.forEach(function(marker, index) {
+        if (index === sliderValue) {
+          marker.classList.add('active');
+        } else {
+          marker.classList.remove('active');
+        }
+      });
+    }
+
+    // Update map based on slider
+    function updateMap() {
+      var showAll = showAllCheckbox.checked;
+      var sliderValue = parseInt(timeSlider.value);
+
+      // Update month markers
+      updateMonthMarkers();
+
+      // Clear all layers first
+      Object.values(monthLayerGroups).forEach(function(layerGroup) {
+        map.removeLayer(layerGroup);
+      });
+
+      // Show all mode
+      if (showAll) {
+        timeLabel.textContent = 'All';
+        var visibleCount = 0;
+        Object.values(monthLayerGroups).forEach(function(layerGroup) {
+          map.addLayer(layerGroup);
+          visibleCount += layerGroup.getLayers().length;
+        });
+        statsDiv.textContent = 'Showing all ' + allMarkers.length.toLocaleString() + ' photos';
+        timeSlider.disabled = true;
+        monthMarkersDiv.style.opacity = '0.4';
+        return;
+      }
+
+      // Enable slider
+      timeSlider.disabled = false;
+      monthMarkersDiv.style.opacity = '1';
+
+      // Show only selected month
+      var selectedIndex = sliderValue;
+      var selectedYearMonth = timePoints[selectedIndex].yearMonth;
+      timeLabel.textContent = timePoints[selectedIndex].label;
+
+      var layerGroup = monthLayerGroups[selectedYearMonth];
+      map.addLayer(layerGroup);
+      var visibleCount = layerGroup.getLayers().length;
+
+      statsDiv.textContent = 'Showing ' + visibleCount.toLocaleString() + ' of ' +
+                             allMarkers.length.toLocaleString() + ' photos';
+    }
 
     // GeoJSON laden
     fetch('photos.geojson')
       .then(response => response.json())
       .then(data => {
+        var yearMonths = new Set();
+
+        // Group markers by year-month
         data.features.forEach(feature => {
           var coords = feature.geometry && feature.geometry.coordinates;
-          if(!coords || coords.length !== 2) return; // nur gültige Punkte
+          if(!coords || coords.length !== 2) return;
 
-          // Marker erstellen
-          var marker = L.marker([coords[1], coords[0]]);
+          // Extract year-month
+          var yearMonth = getYearMonth(feature.properties.datetime);
+          if (!yearMonth) return;
 
-          // Thumbnail-HTML
+          yearMonths.add(yearMonth);
+
+          // Create cluster group for this month if it doesn't exist
+          if (!monthLayerGroups[yearMonth]) {
+            monthLayerGroups[yearMonth] = L.markerClusterGroup();
+          }
+
+          // Marker erstellen with custom icon
+          var marker = L.marker([coords[1], coords[0]], { icon: customIcon });
+
+          // Thumbnail-HTML (use single gallery name for all images)
           var thumbHtml = "";
           if(feature.properties.thumb){
             var fullImagePath = feature.properties.original || feature.properties.thumb;
-            thumbHtml = "<a href='" + fullImagePath + "' data-lightbox='img-" + feature.properties.filename + "'>" +
+            thumbHtml = "<a href='" + fullImagePath + "' data-lightbox='gallery' data-title='" +
+                        feature.properties.filename + " - " + feature.properties.datetime + "'>" +
                         "<img class='popup-img' src='" + feature.properties.thumb + "'>" +
                         "</a>";
           }
@@ -71,13 +390,82 @@
             feature.properties.datetime
           );
 
-          markers.addLayer(marker);
+          // Add to month-specific cluster group
+          monthLayerGroups[yearMonth].addLayer(marker);
+          allMarkers.push(marker);
         });
 
-        // Alle Marker hinzufügen
-        map.addLayer(markers);
+        // Create sorted time points array
+        timePoints = Array.from(yearMonths).sort().map(function(ym) {
+          return { yearMonth: ym, label: formatYearMonth(ym) };
+        });
+
+        // Set slider range: 0 to N-1 for each month
+        timeSlider.min = 0;
+        timeSlider.max = timePoints.length - 1;
+        timeSlider.value = 0;
+
+        // Create month markers for ALL months with photos
+        timePoints.forEach(function(tp, index) {
+          var marker = document.createElement('span');
+          marker.className = 'month-marker';
+          marker.textContent = tp.label;
+          marker.dataset.index = index;
+          marker.addEventListener('click', function() {
+            if (!showAllCheckbox.checked) {
+              timeSlider.value = this.dataset.index;
+              updateMap();
+            }
+          });
+          monthMarkersDiv.appendChild(marker);
+        });
+
+        // Initial map update
+        updateMap();
+
+        // Event listeners
+        timeSlider.addEventListener('input', debounceUpdate);
+        showAllCheckbox.addEventListener('change', updateMap);
+
+        // Random button click handler
+        randomButton.addEventListener('click', function() {
+          if (allMarkers.length === 0) return;
+
+          // Get random marker from all markers
+          var randomIndex = Math.floor(Math.random() * allMarkers.length);
+          var randomMarker = allMarkers[randomIndex];
+
+          // Get marker's coordinates
+          var latlng = randomMarker.getLatLng();
+
+          // Zoom to max level first to ensure cluster is expanded
+          map.setView(latlng, 18);
+
+          // Wait for map to finish, then open popup and wait for it to render
+          setTimeout(function() {
+            randomMarker.openPopup();
+
+            // Wait a bit more for popup to fully render
+            setTimeout(function() {
+              var popupElement = randomMarker.getPopup().getElement();
+              if (popupElement) {
+                var lightboxLink = popupElement.querySelector('a[data-lightbox]');
+                if (lightboxLink) {
+                  lightboxLink.click();
+                } else {
+                  console.log('Lightbox link not found in popup');
+                }
+              } else {
+                console.log('Popup element not found');
+              }
+            }, 200);
+          }, 400);
+        });
       })
-      .catch(err => console.error("Fehler beim Laden der GeoJSON:", err));
+      .catch(err => {
+        console.error("Fehler beim Laden der GeoJSON:", err);
+        statsDiv.textContent = 'Error loading data';
+      });
   </script>
 </body>
 </html>
