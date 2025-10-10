@@ -45,7 +45,7 @@
     var markers = L.markerClusterGroup();
 
     // GeoJSON laden
-    fetch('photos_with_thumbs_fixed.geojson')
+    fetch('photos.geojson')
       .then(response => response.json())
       .then(data => {
         data.features.forEach(feature => {

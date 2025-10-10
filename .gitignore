@@ -1,0 +1,6 @@
+photos
+thumbnails
+thumbnails/*
+photos/*
+photos.json
+photos.geojson
