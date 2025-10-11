@@ -426,8 +426,8 @@
     function getURLParams() {
       var params = new URLSearchParams(window.location.search);
       return {
-        lat: parseFloat(params.get('lat')) || 51.0,
-        lng: parseFloat(params.get('lng')) || 13.7,
+        lat: parseFloat(params.get('lat')) || 51.02,
+        lng: parseFloat(params.get('lng')) || 13.79,
         zoom: parseInt(params.get('zoom')) || 12,
         month: params.get('month') || null,
         view: params.get('view') || 'markers'  // 'markers' or 'heatmap'
