@@ -16,11 +16,10 @@ SImple-Geo-MAp is an interactive web-based map application for visualizing geota
 
 ```
 SIGMAp/
-├── map.html                    # Basic map (all photos, no time filter)
-├── map_slider.html             # Map with time slider controls
+├── map.html                    # Map
 ├── prepare_data.py             # Unified data preparation script
 ├── photos.json                 # ExifTool output (generated)
-├── photos_with_thumbs.geojson  # GeoJSON with thumbnails (generated)
+├── photos.geojson  # GeoJSON with thumbnails (generated)
 ├── thumbnails/                 # Generated thumbnail images
 └── photos/                     # Original photos
 ```
@@ -51,15 +50,19 @@ Extract GPS data from photos and create thumbnails:
 python prepare_data.py --extract-exif /path/to/photos --convert --thumbnails
 ```
 
-### 3. Start Web Server
+### 2. Start Web Server
 
 ```bash
 python -m http.server 8000
 ```
 
-## Usage
+### 3. 
 
-### Data Preparation Script
+Visit http://127.0.0.1:8000/map.html
+
+## Data Preparation
+
+### Script Usage
 
 The `prepare_data.py` script handles all data preparation tasks:
 
@@ -97,64 +100,14 @@ python prepare_data.py \
 python prepare_data.py --help
 ```
 
-### Map Versions
-
-#### **map.html** - Basic Map
-- Displays all photos on an interactive map
-- Marker clustering for performance
-- Click markers to view thumbnails
-- Click thumbnails to view full-size images
-- Best for: Simple visualization without time filtering
-
-#### **map_slider.html** - Map with Time Filter
-- All features of basic map
-- Time slider to filter by month/year
-- "Show all" toggle
-- Clickable month markers
-- Photo count statistics
-- Best for: Exploring photos chronologically
-
-## Configuration
-
-### Customize Map Settings
-
-Edit the HTML files to customize:
-
-**Map Center & Zoom:**
-```javascript
-var map = L.map('map').setView([51.0, 13.7], 12);
-//                                lat   lon   zoom
-```
-
-**Thumbnail Size in GeoJSON:**
-```bash
-python prepare_data.py --convert --thumbnails --thumb-size 200 200
-```
-
-**Accent Color:**
-Edit CSS in `map_slider.html`:
-```css
-background: #f59e0b;  /* Amber - change to any color */
-```
-
-**Marker Icon:**
-Edit custom icon in `map_slider.html`:
-```javascript
-var customIcon = L.divIcon({
-  html: '<div style="background: #f59e0b; ..."></div>',
-  // Customize color, size, etc.
-});
-```
-
 ## Troubleshooting
 
 ### No photos appear on map
 - Check browser console (F12) for errors
-- Verify `photos_with_thumbs.geojson` has proper UTF-8 encoding
+- Verify `photos.geojson` has proper UTF-8 encoding
 - Ensure GeoJSON file is in the same directory as HTML files
 
 ### Lightbox shows thumbnail instead of full image
-- Verify symbolic link to photos directory exists
 - Check that `original` property in GeoJSON points to correct path
 
 ### ExifTool errors
@@ -165,10 +118,6 @@ var customIcon = L.divIcon({
 - Install Pillow: `pip install pillow`
 - Check write permissions for thumbnails directory
 - Verify source photo paths in `photos.json` are accessible
-
-### Encoding issues (weird characters)
-- The new `prepare_data.py` always outputs UTF-8
-- If using old scripts, re-run with `prepare_data.py`
 
 ## License
 

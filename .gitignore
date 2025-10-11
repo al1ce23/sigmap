@@ -1,6 +1,32 @@
+# Photo directories - never upload images
+photos/
+thumbnails/
+thumbnails_preview/
+batches/
 photos
-thumbnails
-thumbnails/*
-photos/*
-photos.json
-photos.geojson
+# Data files - too large for git
+*.json
+*.geojson
+*.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
