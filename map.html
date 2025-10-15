@@ -826,7 +826,22 @@
 
               // Load images after popup opens
               setTimeout(function() {
+                var gallery = document.querySelector('.cluster-gallery');
                 var galleryItems = document.querySelectorAll('.cluster-gallery-item');
+
+                // Add horizontal scroll with mouse wheel to gallery
+                if (gallery) {
+                  gallery.addEventListener('wheel', function(e) {
+                    // Only handle horizontal scrolling if there's content to scroll
+                    if (this.scrollWidth > this.clientWidth) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      // Scroll horizontally instead of vertically
+                      this.scrollLeft += e.deltaY;
+                    }
+                  }, { passive: false });
+                }
+
                 markers.forEach(function(marker, index) {
                   if (marker.thumbPath && galleryItems[index]) {
                     var img = document.createElement('img');
