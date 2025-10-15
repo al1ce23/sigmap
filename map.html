@@ -185,6 +185,12 @@
       background: #3a2a1a;
       border-color: #f59e0b;
     }
+    .month-marker.selected {
+      color: #f59e0b;
+      font-weight: bold;
+      background: #3a2a1a;
+      border-color: #f59e0b;
+    }
     .checkbox-container {
       display: flex;
       align-items: center;
@@ -487,6 +493,7 @@
     var monthLayerGroups = {}; // "YYYY-MM" -> cluster group
     var heatLayer = null; // Heatmap layer
     var isHeatmapView = false; // Current view mode
+    var selectedMonths = new Set(); // Track selected months for multi-selection
 
     // UI Elements
     var timeSlider = document.getElementById('timeSlider');
@@ -604,17 +611,42 @@
       timeSlider.disabled = false;
       monthMarkersDiv.style.opacity = '1';
 
-      // Show only selected month
-      var selectedIndex = sliderValue;
-      var selectedYearMonth = timePoints[selectedIndex].yearMonth;
-      timeLabel.textContent = timePoints[selectedIndex].label;
+      // Show selected months (multi-selection mode)
+      if (selectedMonths.size > 0) {
+        var visibleCount = 0;
+        var monthLabels = [];
 
-      var layerGroup = monthLayerGroups[selectedYearMonth];
-      map.addLayer(layerGroup);
-      var visibleCount = layerGroup.getLayers().length;
+        selectedMonths.forEach(function(yearMonth) {
+          var layerGroup = monthLayerGroups[yearMonth];
+          if (layerGroup) {
+            map.addLayer(layerGroup);
+            visibleCount += layerGroup.getLayers().length;
+            var tp = timePoints.find(function(t) { return t.yearMonth === yearMonth; });
+            if (tp) monthLabels.push(tp.label);
+          }
+        });
 
-      statsDiv.textContent = 'Showing ' + visibleCount.toLocaleString() + ' of ' +
-                             allMarkers.length.toLocaleString() + ' photos';
+        if (monthLabels.length <= 3) {
+          timeLabel.textContent = monthLabels.join(', ');
+        } else {
+          timeLabel.textContent = monthLabels.length + ' months selected';
+        }
+
+        statsDiv.textContent = 'Showing ' + visibleCount.toLocaleString() + ' of ' +
+                               allMarkers.length.toLocaleString() + ' photos';
+      } else {
+        // Fallback to single month from slider
+        var selectedIndex = sliderValue;
+        var selectedYearMonth = timePoints[selectedIndex].yearMonth;
+        timeLabel.textContent = timePoints[selectedIndex].label;
+
+        var layerGroup = monthLayerGroups[selectedYearMonth];
+        map.addLayer(layerGroup);
+        var visibleCount = layerGroup.getLayers().length;
+
+        statsDiv.textContent = 'Showing ' + visibleCount.toLocaleString() + ' of ' +
+                               allMarkers.length.toLocaleString() + ' photos';
+      }
     }
 
     // Update heatmap view
@@ -646,18 +678,38 @@
         timeSlider.disabled = false;
         monthMarkersDiv.style.opacity = '1';
 
-        // Show only selected month
-        var selectedYearMonth = timePoints[sliderValue].yearMonth;
-        timeLabel.textContent = timePoints[sliderValue].label;
+        // Show selected months (multi-selection mode)
+        if (selectedMonths.size > 0) {
+          var monthLabels = [];
 
-        photosToShow = allPhotos.filter(function(photo) {
-          return photo.yearMonth === selectedYearMonth;
-        });
+          photosToShow = allPhotos.filter(function(photo) {
+            return selectedMonths.has(photo.yearMonth);
+          });
+
+          selectedMonths.forEach(function(yearMonth) {
+            var tp = timePoints.find(function(t) { return t.yearMonth === yearMonth; });
+            if (tp) monthLabels.push(tp.label);
+          });
+
+          if (monthLabels.length <= 3) {
+            timeLabel.textContent = monthLabels.join(', ');
+          } else {
+            timeLabel.textContent = monthLabels.length + ' months selected';
+          }
+        } else {
+          // Fallback to single month from slider
+          var selectedYearMonth = timePoints[sliderValue].yearMonth;
+          timeLabel.textContent = timePoints[sliderValue].label;
+
+          photosToShow = allPhotos.filter(function(photo) {
+            return photo.yearMonth === selectedYearMonth;
+          });
+        }
       }
 
       // Create heatmap data: [lat, lng, intensity]
       var heatData = photosToShow.map(function(photo) {
-        return [photo.lat, photo.lng, 0.8];
+        return [photo.lat, photo.lng, 0.3];
       });
 
       // Create and add heatmap layer
@@ -665,7 +717,7 @@
         radius: 25,
         blur: 15,
         maxZoom: 17,
-        max: 1.0,
+        max: 5.0,
         gradient: {
           0.0: 'blue',
           0.3: 'cyan',
@@ -942,13 +994,34 @@
               monthMarker.className = 'month-marker';
               monthMarker.textContent = month.label;
               monthMarker.dataset.index = month.index;
+              monthMarker.dataset.yearMonth = month.yearMonth;
 
-              monthMarker.addEventListener('click', function() {
-                if (!showAllCheckbox.checked) {
+              monthMarker.addEventListener('click', function(e) {
+                if (showAllCheckbox.checked) return;
+
+                var yearMonth = this.dataset.yearMonth;
+
+                // Multi-selection with Ctrl/Cmd key only
+                if (e.ctrlKey || e.metaKey) {
+                  // Toggle selection
+                  if (selectedMonths.has(yearMonth)) {
+                    selectedMonths.delete(yearMonth);
+                    this.classList.remove('selected');
+                  } else {
+                    selectedMonths.add(yearMonth);
+                    this.classList.add('selected');
+                  }
+                } else {
+                  // Normal click without Ctrl - clear selection and use slider mode
+                  selectedMonths.clear();
+                  monthsRow.querySelectorAll('.month-marker').forEach(function(m) {
+                    m.classList.remove('selected');
+                  });
                   timeSlider.value = this.dataset.index;
-                  updateMap();
-                  updateURL();
                 }
+
+                updateMap();
+                updateURL();
               });
 
               monthsRow.appendChild(monthMarker);
@@ -1026,6 +1099,11 @@
               marker.classList.remove('expanded');
             });
             window.currentExpandedYear = null;
+            // Clear multi-selection
+            selectedMonths.clear();
+            monthsRow.querySelectorAll('.month-marker').forEach(function(m) {
+              m.classList.remove('selected');
+            });
           }
           updateMap();
           updateURL();
